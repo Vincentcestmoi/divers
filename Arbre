@@ -1,0 +1,103 @@
+class Arbre:
+    def __init__(self, data):
+        self.data = data
+        self.fils_droit = None
+        self.fils_gauche = None
+        
+    def a_gauche(self, data):
+        """donne l'étiquette data au noeuds fils gauche de l'arbre"""
+        if self.fils_gauche is None:
+            self.fils_gauche = Arbre(data)
+        else:
+            self.fils_gauche.data = data
+            
+    def a_droit(self, data):
+        """donne l'étiquette data au noeuds fils droit de l'arbre"""
+        if self.fils_droit is None:
+            self.fils_droit = Arbre(data)
+        else:
+            self.fils_droit.data = data
+    
+    def prefixe(self):
+        """affiche le parcours prefixe de l'arbre (le père avant son fils gauche, lui-même avant le fils droit) """
+        print(self.data)
+        if not self.fils_gauche is None:
+            self.fils_gauche.prefixe()
+        if not self.fils_droit is None:
+            self.fils_droit.prefixe()
+            
+    def infixe(self):
+        """affiche le parcours infixe de l'arbre (le père après son fils gauche mais avant son fils droit)"""
+        if not self.fils_gauche is None:
+            self.fils_gauche.infixe()
+        print(self.data)
+        if not self.fils_droit is None:
+            self.fils_droit.infixe()
+    
+    def sufixe(self):
+        """affiche le parcours sufixe de l'arbre (la père après son fils droit, lui-même après le fils gauche))"""
+        if not self.fils_gauche is None:
+            self.fils_gauche.sufixe()
+        if not self.fils_droit is None:
+            self.fils_droit.sufixe()
+        print(self.data)
+        
+    def possede(self, data):
+        """Renvoie True si l'arbre contient donnee, False sinon"""
+        if self.data == data:
+            return True
+        if not (self.fils_droit is None or self.fils_gauche is None):
+            return self.fils_droit.possede(data) or self.fils_gauche.possede(data)
+        if not self.fils_gauche is None:
+            return self.fils_gauche.possede(data)
+        if not self.fils_droit is None:
+            return self.fils_droit.possede(data)
+        return False
+    
+    def largeur(self):
+        """affiche le parcours en largeur de l'arbre (de la premiere à la derniere ligne, de gauche à droite)"""
+        lst =  []
+        parcours_bin = self.__stock__()
+        for cle in parcours_bin:
+            lst.append(cle)
+        tribof(lst)
+        for cle in lst:  #a obtimiser pour les noeuds vides
+            print(parcours_bin[cle])
+        
+    def __stock__(self, i = 1, dico = {}):
+        """fonction auxiliaire, n'est pas faite pour un usage utilisateur"""
+        dico[i] = self.data
+        if not self.fils_droit is None:
+            self.fils_droit.__stock__(10*i + 1, dico)
+        if not self.fils_gauche is None:
+            self.fils_gauche.__stock__(10*i, dico)
+        return(dico)
+    
+    def __str__(self, ligne=1):
+        print('|' + '  '*ligne + self.data + '|')
+        if not self.fils_gauche is None:
+            self.fils_gauche.__str__(ligne + 1)
+        if not self.fils_droit is None:
+            self.fils_droit.__str__(ligne + 1)
+        return '|Fin|'
+
+def tribof(lst):
+    """un tri de liste de piètre qualité codé en 3 minutes"""
+    i = 0
+    while i < len(lst)-1:
+        k = i + 1
+        if lst[k]<lst[i]:
+            lst[k], lst[i] = lst[i], lst[k]
+            i = 0
+        else:
+            i += 1
+    
+#mon arbre:
+my = Arbre('racine')
+my.a_gauche('gauche')
+my.a_droit('droit')
+my.fils_gauche.a_gauche('gauche-gauche')
+my.fils_gauche.a_droit('gauche-droite')
+my.fils_droit.a_droit('droite-droite')
+my.fils_droit.a_gauche('droite-gauche')
+my.fils_gauche.fils_gauche.a_gauche('ggg')
