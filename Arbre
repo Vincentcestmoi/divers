@@ -1,6 +1,6 @@
 class Arbre:
-    def __init__(self, data):
-        self.data = data
+    def __init__(self, racine):
+        self.data = racine
         self.fils_droit = None
         self.fils_gauche = None
         
@@ -63,6 +63,27 @@ class Arbre:
         tribof(lst)
         for cle in lst:  #a obtimiser pour les noeuds vides
             print(parcours_bin[cle])
+            
+    def profondeur(self):
+        prof = 0
+        temp = self.__stock__()
+        maxi = 0
+        for cle in temp:
+            if cle > maxi:
+                maxi = cle
+        for _ in str(maxi):
+            prof += 1
+        return prof
+    
+    def nbr_feuilles(self):
+        if self.fils_droit is None and self.fils_gauche is None:
+            return 1
+        if self.fils_droit is None:
+            return self.fils_gauche.nbr_feuilles()
+        if self.fils_gauche is None:
+            return self.fils_droit.nbr_feuilles()
+        return (self.fils_droit.nbr_feuilles() + self.fils_gauche.nbr_feuilles())
+            
         
     def __stock__(self, i = 1, dico = {}):
         """fonction auxiliaire, n'est pas faite pour un usage utilisateur"""
@@ -73,8 +94,30 @@ class Arbre:
             self.fils_gauche.__stock__(10*i, dico)
         return(dico)
     
+    def insertion_ABR(self, valeur):
+        """si vous voulez que votre arbre soit un arbre binaire de recherche(ABR), utilisez cette méthode plutôt que a_gauche et a_droite pour inserer des valeurs (int/float uniquement)"""
+        if valeur == self.data:
+            return None
+        if valeur > self.data:
+            if not self.fils_droit is None:
+                self.fils_droit.insertion_ABR(valeur)
+            else:
+                self.fils_droit = Arbre(valeur)
+                return None
+        elif valeur < self.data:
+            if not self.fils_gauche is None:
+                self.fils_gauche.insertion_ABR(valeur)
+            else:
+                self.fils_gauche = Arbre(valeur)
+                return None
+            
+    
     def __str__(self, ligne=1):
-        print('|' + '  '*ligne + self.data + '|')
+        if self.fils_gauche is None and self.fils_droit is None:
+            f = '  (feuille)'
+        else:
+            f = ''
+        print('|' + '  '*ligne + str(self.data) + '|' + f)
         if not self.fils_gauche is None:
             self.fils_gauche.__str__(ligne + 1)
         if not self.fils_droit is None:
@@ -82,7 +125,7 @@ class Arbre:
         return '|Fin|'
 
 def tribof(lst):
-    """un tri de liste de piètre qualité codé en 3 minutes"""
+    """un tri de liste de piètre qualité codée en 3 minutes"""
     i = 0
     while i < len(lst)-1:
         k = i + 1
