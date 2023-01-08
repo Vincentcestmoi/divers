@@ -65,6 +65,7 @@ class Arbre:
             print(parcours_bin[cle])
             
     def profondeur(self):
+    """renvoie la profondeur de l'Arbre, c'est à dire le nombre de noeuds de sa plus longue branche"""
         prof = 0
         maxi = 0
         for cle in self.__stock__():
@@ -75,6 +76,7 @@ class Arbre:
         return prof
     
     def nbr_feuilles(self):
+    """renvoie le nombre de feuilles de l'arbre, qui sont ses noeuds dénués de fils"""
         if self.fils_droit is None and self.fils_gauche is None:
             return 1
         if self.fils_droit is None:
