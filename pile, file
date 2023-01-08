@@ -1,0 +1,52 @@
+class Liste:
+    def __init__(self, contenu, suivante):
+        self.contenu = contenu
+        self.suivante = suivante
+
+class Pile:
+    def __init__(self):
+        self.data = Liste(None, None)
+        
+    def est_vide(self):
+        return self.data.contenu is None and self.data.suivante is None
+    
+    def empile(self, value):
+        self.data = Liste(value, self.data)
+        
+    def depile(self):
+        if self.est_vide():
+            return print("Vous ne pouvez pas dépiler une pile vide !")
+        valeur = self.data.contenu
+        self.data = self.data.suivante
+        return valeur
+    
+class File:
+    def __init__(self):
+        self.entree = Pile()
+        self.sortie = Pile()
+        
+    def est_vide(self):
+        return self.entree.est_vide() and self.sortie.est_vide()
+    
+    def enfile(self, value):
+        self.entree.empile(value)
+        
+    def defile(self):
+        if self.est_vide():
+            return print('Vous ne ppuvez pas défiler une file vide !')
+        if self.sortie.est_vide():
+            while not self.entree.est_vide():
+                self.sortie.empile(self.entree.depile())
+        return self.sortie.depile()
+
+p = Pile()
+p.empile('fin')
+p.empile(None)
+p.empile('aaa')
+p.empile('début')
+
+f = File()
+f.enfile('début')
+f.enfile(666)
+f.enfile('vache')
+f.enfile('fin')
