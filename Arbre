@@ -66,9 +66,8 @@ class Arbre:
             
     def profondeur(self):
         prof = 0
-        temp = self.__stock__()
         maxi = 0
-        for cle in temp:
+        for cle in self.__stock__():
             if cle > maxi:
                 maxi = cle
         for _ in str(maxi):
