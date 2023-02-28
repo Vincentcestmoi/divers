@@ -761,14 +761,17 @@ def analyste(Joueur):
         if Joueur.competence == connu:
             print("'Et bien... Vous êtes célèbre, mais... Vous ne possédez pas vraiment de compétence'")
             print("'Désolé de vous l'apprendre..'")
-            time.sleep(2)
         elif Joueur.competence == coup_critique:
             print("Vous avez une certaine force dans les bras... Je pense que vous serez parfois capable de porter des coups d'une rare puissance à vos ennemis")
             print("Vous la trouvez peut être faible pour l'instant, mais en vous améliorant, votre compétence deviendra plus puissantes et vous l'utiliserai plus souvent")
             time.sleep(2)
         elif Joueur.competence == garde:
             print("'Vous possédez de bon réflexe, capables de briser partiellement des attaques adverses'")
-            print("'
+            print("'Avec des l'expérience, vous pourrez bloquer plus souvent et plus pleinement les assauts ennemis'")
+        elif Joueur.competence == sprint:
+            print("'Vous possédez de grande aptitudes de course, cela vous permettra parfois de prendre vos adversaires de vitesse'")
+            print("'Bien que se soit pas très puissant, cela vous offrira de grandes opportunités dans la vie de tous les jours'")
+        time.sleep(2)
     print('#analyst not found#')
     ville(Joueur)
 
