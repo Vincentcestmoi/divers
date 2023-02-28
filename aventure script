@@ -1,0 +1,809 @@
+from random import randint
+import time
+from arbre import *
+
+def Critique(niveau):
+    #la réussite de l'usage de cette compétence et son effet potentiel augmente à chaque niveau
+    if niveau < 8:
+        if randint(0, 10 - niveau) == 0:
+            print('Coup critique infligé !!!')
+            return randint(1, niveau)
+        return 0
+    if randint(0, 2) != 0:
+        print('Coup critique infligé !!!')
+        return randint(2, niveau + 1)
+    return 0
+
+def Garde(niveau):
+    effet = False
+    #la reussite de l'usage de cette compétence se fait par palier de niveau
+    if niveau <= 5:
+        if randint(0, 10) == 0:
+            effet = True
+    elif niveau <= 10:
+        if randint(0, 6) == 0:
+            effet = True
+    else:
+        if randint(0, 3) == 0:
+            effet = True
+    if effet:
+        #la puissance potentielle de cette compétence augmente avec le niveau
+        print("L'attaque est parée grace à la garde de la cible")
+        return randint(1, niveau)
+    return 0
+
+def Sprint(niveau):
+    if randint(0, 2) == 0:
+        #la puissance potentielle de cette compétence augmente légèrement avec le niveau
+        print("La vitesse de l'assaillant lui permet de porter un coup sous la garde de l'adversaire !")
+        return randint(0, niveau//3)
+    return 0
+
+def game_over():
+    print('Vous êtes mort...')
+    while True:
+        pass
+    
+class Monstres(): #la classe des monstre rencontré, le joueur est un monstre dont l description est "Un grand aventurier"
+    def __init__(self, nom, description, attaque, vie, caracteristiques, points_dexperience, palier, niveau):
+        self.nom = nom
+        self.profil = description
+        self.ATK = attaque
+        self.PVM = vie
+        self.PV = vie
+        self.competence = caracteristiques
+        self.XP = points_dexperience
+        self.palier = palier
+        self.niveau = niveau
+        
+    def est_joueur(self):
+        return self.profil == "Un grand aventurier"
+        
+    def gain_competence(self, competence):
+        if competence == self.competence:
+            return None
+        if self.competence == connu:
+            print('Vous avez aquis la compétence suivante :')
+            print(competence)
+            self.competence = competence
+            time.sleep(2)
+        else:
+            print('Vous pouvez acquerir la compétence suivante :')
+            print(competence)
+            time.sleep(4)
+            print('')
+            print('Cependant, vous possédez déjà une compétence')
+            print('')
+            time.sleep(1)
+            print(self.competence)
+            if decision(('g', 'G', 'c', 'C'),'    gardez votre compétence actuelle(G)      ou      changer de compétence(C)') in ['c', 'C']:
+                self.competence = competence
+                print('La compétence a été changé avec succés')
+            else:
+                print('Vous avez conservé votre compétence actuelle')
+            print('')
+        
+    def presentmonstre(self):
+        print(self.nom, 'niveau', self.niveau, ':')
+        print(self.profil)
+        print('attaque :', self.ATK)
+        print('vie :',self.PV, '/', self.PVM)
+        print(self.competence)
+        print('')
+        
+    def est_mort(self):
+        return self.PV <= 0
+    
+    def gainXP(self, xp):
+        print('Vous avez gagné', xp, "points d'experiences")
+        self.XP += xp
+        print("expérience :", self.XP, '/', self.palier)
+        while self.XP >= self.palier:
+            print('')
+            time.sleep(1)
+            print('Vous avez passé un niveau !!')
+            time.sleep(1.5)
+            print('')
+            self.XP -= self.palier
+            self.palier += (randint(self.niveau*2, self.niveau*4))
+            self.niveau += 1
+            print(str(self.nom) + ' :')
+            print(self.profil)
+            a = randint(1, 2)
+            print('attaque :', self.ATK, '+', a)
+            self.ATK += a
+            a = randint(1, 4)
+            print('vie :',self.PVM, '+', a, '/', self.PVM, '+', a)
+            self.PVM += a
+            self.PV = self.PVM
+            print(self.competence)
+            time.sleep(4)
+
+    def attaque(self, cible):
+        #initialisation des impacts potentiels des compétences
+        bonus = 0
+        defense = 0
+        #competence offensive
+        if self.competence == coup_critique:
+            bonus = Critique(self.niveau)
+        #competence defensive
+        if cible.competence == garde:
+            defense = Garde(cible.niveau)
+        if defense != 0:
+            print("La défense est augmentée de " + str(defense) + " point(s) grace à la compétence 'Garde'")
+        #frappe
+        print('')
+        print(self.nom, 'frappe', cible.nom)
+        print('')
+        print(str(cible.nom) + ' :')
+        #calcul des effets de compétence
+        if self.ATK + bonus <= defense:
+            if self.ATK > 1:
+                print("l'arme est brisée par la garde, l'attaque est réduite à 1")
+                self.ATK = 1
+        #application des dommages
+            cible.PV -= 1
+        else:
+            cible.PV -= self.ATK + bonus - defense
+        #vérification de la survis de la cible
+        if cible.est_mort():
+            print('vie : 0 /' + str(cible.PVM))
+            time.sleep(0.5)
+            print(cible.nom, 'a été vaincu')
+            #vérification de la victoire du joueur
+            if self.est_joueur() :
+                print('')
+                self.gainXP(cible.XP)
+            #defaite du joueur
+            else:
+                game_over()
+        #en cas de survis de la cible
+        else:
+            print('vie :', cible.PV, '/', cible.PVM)
+
+
+def decision(issue, choix):
+    """
+    propose au joueur un choix, et lui demande de decider ce qu'il veut faire
+    si l'issue qu'il donne est correcte, renvoie cette issue, sinon, repose sa question
+    """
+    print('vous pouvez :')
+    print(choix)
+    entree = input('que faites vous ? ')
+    if entree in issue:
+        print('')
+        return entree
+    else:
+        print('')
+        print('commande incorrect')
+        return decision(issue, choix)
+
+#les évènement à usage limité sont concervé ici :
+flag = {'foret2' : True, 'foret2Rat' : True, 'banditGrotte' : True, 'parchgrotte' : True, 'torchegrotte' : True, 'ville1' : True, 'magagain' : False}
+
+#les objets spéciaux ou équipement aquis sont stockés ici
+objet = []
+arme = ['', 0]
+armure = ['', 0]
+piece = [0]
+vieaffect = [0, 0]
+
+#evenement
+def repos():
+    print('Vous vous reposez quelques instants')
+    print('Energie restaurée')
+    print('')
+    time.sleep(1)
+    Joueur.PV = Joueur.PVM
+    Joueur.presentmonstre()
+    print('')
+    time.sleep(2)
+
+def soin():
+    #si le joueur a des soins
+    if vieaffect[0] > 0 and Joueur.PV != Joueur.PVM:
+        print('Vous regagnez de la santé grace à vos équipements et/ou compétence')
+        time.sleep(2)
+        #si les soins ne depassent pas la vie maximale
+        if vieaffect[0] <= Joueur.PVM - Joueur.PV:
+            print('Vous guérissez de ', vieaffect[0], 'points de vie')
+            Joueur.PV += vieaffect[0]
+        #si les points dépassent la valeur maximale de PV
+        else:
+            print('Vous guérissez de ', Joueur.PVM - Joueur.PV, 'points de vie')
+            Joueur.PV = Joueur.PVM
+        print('')
+        print(Joueur.nom, ' :')
+        print(Joueur.PV, ' / ', Joueur.PVM)
+        time.sleep(3)
+        print('')
+    
+#caractéristiques
+grincheux = 'Ce monstre est ronchon (sans effet)'
+connu = 'Son nom est su de quelques uns (sans effet)'
+laid = 'Il est désagréable à regarder (sans effet)'
+garde = "Garde(passif) : expérience du combat permettant de parfois diminuer l'impact d'un coup reçu"
+sanglant = "Il est couvert de sang frais, pas du sien apparemment (sans effet)"
+coup_critique = "Coup critique(passif) : Une capacité qui parfois augmente la puissance de frappe"
+sprint = "Sprint(passif - actif) : Améliore parfois légèrement votre attaque - modifie ou ajoute occasionnellement les choix proposés"
+
+#monstres
+Joueur = Monstres('name', "Un grand aventurier", 2, 10, connu, 0, 5, 1)
+gobelintest = Monstres('Gobelin', "un petit monstre vert et puant, légèrement plus faible qu'un homme", 2, 8, grincheux, 5, None, 1)
+gobelinkiller = Monstres('Gobelin', "un petit monstre vert et féroce, légèrement plus faible qu'un homme", 2, 10, sanglant, 4, None, 2)
+rat = Monstres('Rat', "une bete répugnante mais généralement inoffensive", 0, 1, laid, 1, None, 0)
+bandit = Monstres('bandit', 'Un homme versé dans les activités criminelles', 2, 12, coup_critique, 7, None, 2)
+       
+       
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+
+
+#Les scénarios du script concret :
+
+#0.0: le tutoriel
+def tutoriel():
+    name = input('rentrez votre nom : ')
+    Joueur.nom = name
+    print("bienvenue dans notre humble village noble guerrier, nous somme ravie d'acceuillir chez nous")
+    print(str(Joueur.nom) + ", le célèbre mercenaire, pour nous protéger des monstres qui nous attaquent.")
+    print('')
+    time.sleep(5)
+    print('!!!')
+    time.sleep(2.5)
+    print('')
+    print('Un gobelin attaque le village !!')
+    print('')
+    time.sleep(3.5)
+    print('Sauvez nous, par pitié !!')
+    print('')
+    gobelintest.presentmonstre()
+    print('')
+    #fuite ?
+    if decision(('A', 'a', 'f', 'F'), '      affronter le monstre(A)     ou          fuir(F)') in ('f', 'F'):
+        print('Attends, que fais tu ? Ne nous abandonne pas')
+        #fuite confirmée
+        time.sleep(1)
+        print('')
+        if decision(('r', 'R', 'f', 'F'), '      retourner se battre(R)     ou          fuir(F)') in ('f', 'F'):
+            foret1(Joueur)#à affiner, arrivée dans la version fuite de la foret d'initiation
+        #retour sur fuite
+        else:
+            print('Vous vous retournez')   
+            print('')
+            time.sleep(1)
+            gobelintest.attaque(Joueur)
+            print('')
+            print('le gobelin regarde autours de lui et fuit')
+            print('')
+            time.sleep(2)
+            print("Vous optenez des points d'experiences")
+            Joueur.gainXP(2)
+            village_depart(Joueur) #à affiner, arrivée dans la version appaisée du village tutoriel
+    #attaque du gobelin
+    else:
+        print('')
+        Joueur.attaque(gobelintest)
+        print('')
+        gobelintest.attaque(Joueur)
+        print('')
+        action = ''
+        time.sleep(1)
+        # le joueur choisit sa réaction
+        action = decision(('a', 'A', 'P', 'p', 'F', 'f'), '      attaquer(A)     ou          Parer(P)     ou         fuir(F)')
+        #attaque directe
+        if action == 'a' or action == 'A':
+            action = None
+            print('Vous sentez votre energie parcourir la lame')
+            print('')
+            time.sleep(1.5)
+            Joueur.ATK += 2
+            Joueur.attaque(gobelintest)
+            print('Coup critique infligé !!')
+            time.sleep(1)
+            Joueur.ATK -= 2
+            print('Le monstre est trop amoché pour se battre')
+            time.sleep(1)
+            print('')
+            Joueur.attaque(gobelintest)
+            time.sleep(5)
+            village_depart(Joueur)#à affiner, arrivée dans la version appaisée du village tutoriel
+        #parade de l'attaque
+        elif action == 'p' or action == 'P':
+            action = ''
+            print('vous dresser votre épée pour vous proteger')
+            time.sleep(1.25)
+            print('Votre défense augmente')
+            gobelintest.ATK = 1
+            print('')
+            time.sleep(1)
+            gobelintest.attaque(Joueur)
+            time.sleep(2)
+            print('')
+            print('Le gobelin regarde autour de lui et fuis !')
+            print('')
+            time.sleep(2)
+            Joueur.gain_competence(garde)
+            time.sleep(1)
+            print('')
+            Joueur.gainXP(3)
+            print('')
+            time.sleep(1)
+            village_depart(Joueur)#à affiner, arrivée dans la version appaisée du village tutoriel
+        #fuite
+        else:
+            action = ''
+            print('')
+            print('Vous partez en courant')
+            print('')
+            foret1(Joueur)#à affiner, arrivée dans la version fuite de la foret d'initiation
+            
+def foret1(Joueur):#la version fuite de la foret d'initiation
+    print('Vous arrivez dans une forêt paisible')
+    if decision(('a', 'A', 'R', 'r'), '      avancer(A)        ou      revenir au village(R)') in ['a', 'A']:
+        foret2(Joueur)#arrivée dans la foret d'initiation
+    else:
+        village_detruit(Joueur)#arrivé dans la version dévastée du village tutoriel
+        
+def village_depart(Joueur):#village de récompense après avoir réussi le tutoriel classique
+    print('Vous vous trouvez dans un jolie petit village paisible')
+    if decision(('p', 'P', 'd', 'D'), '     poursuivre sa route(P)      ou     discuter avec les villageois(D)') in ['d', 'D']:
+        print('Les villageois vous remercie chaleureusement')
+        print("'Vous nous avez sauvés ! Que les anges vous bénissent'")
+        time.sleep(2)
+        print("'Tenez, et encore merci.'")
+        print('Vous recevez [Amulette de protection]')
+        objet.append('[Amulette de protection]')
+        print('Votre santé augmente de trois points')
+        print('')
+        Joueur.PV += 3
+        Joueur.PVM += 3
+        time.sleep(2)
+    print('Vous quittez le village en direction de la foret')
+    print('')
+    time.sleep(1)
+    foret2(Joueur)#arrivée dans la foret d'initiation
+    
+def village_detruit(Joueur):#la version dévasté du village tutoriel
+    print("Vous arrivez dans le village, deserté de ses habitants...")
+    print('Vous appercevez une forme humaine dans une ruelle')
+    print('')
+    time.sleep(3)
+    if decision(('v', 'V', 'p', 'P'), '    aller voir(V)      ou     partir(P)') in ['v', 'V']:
+        #le joueur va voir le cadavre
+        print("Un villageois tué récemment, la chose qui a fait ça n'est pas loin !")
+        print('')
+        time.sleep(4)
+        print('Un gobelin vous attaque !')
+        print('')
+        gobelinkiller.attaque(Joueur)
+        time.sleep(2)
+        print('')
+        gobelinkiller.presentmonstre()
+        print('')
+        if decision(('a', 'A', 'p', 'P'), '      affronter le monstre(A)     ou          partir(P)') in ['a', 'A']:
+            #le joueur affronte le monstre
+            print('')
+            Joueur.attaque(gobelinkiller)
+            print('')
+            time.sleep(2)
+            gobelinkiller.attaque(Joueur)
+            print('')
+            time.sleep(2)
+            if decision(('A', 'a', 'd', 'D'), '      attaquer le monstre(A)     ou          se defendre(D)') in ['a', 'A']:
+                #le joueur attaque le monstre
+                Joueur.attaque(gobelinkiller)
+                print('')
+                print('Le gobelin chancele et lache son arme')
+                print('')
+                gobelinkiller.ATK = 1
+                gobelinkiller.attaque(Joueur)
+                print("Le gobelin s'enfuit !")
+                print('')
+                time.sleep(3)
+                Joueur.gainXP(3)
+            else:#le joueur se défend
+                ('Vous levez votre épée pour vous défendre')
+                gobelinkiller.ATK = 1
+                gobelinkiller.attaque(Joueur)
+                print("L'arme du gobelin se brise")
+                time.sleep(2)
+                print('Vous attaquez le monstre sans répie')
+                while gobelinkiller.PV > 0: #le joueur frappe le gobelin jusqu'à sa mort
+                    Joueur.attaque(gobelinkiller)
+                    time.sleep(2)
+    print('Vous quittez définitivement ce village dévasté')
+    foret2(Joueur)#arrivée dans la foret d'initiation
+    
+#0.1 initiation
+def foret2(Joueur):#la foret d'initiation, passage obligatoire après le tutoriel
+    soin()
+    action = ''
+    print('')
+    if flag['foret2']:
+        repos()
+        flag['foret2'] = False
+    print('Vous vous trouvez dans une paisible clairière au milieu des bois')
+    
+    if flag['foret2Rat']:#si la rat n'a pas encore été découvert
+        print('Devant vous se dresse la route menant à la prochaine grande ville, à votre gauche, une grotte se dessine dans la falaise, et quelque chose semble se tortiller dans un buisson à vos pieds')
+        time.sleep(5)
+        print('')
+        action = decision(('a', 'A', 'e', 'E', 'r', 'R'), 'avancer sur la route(A)     ou     explorer la grotte(E)      ou     regarder dans le buisson(R)')
+        if action in ['R', 'r']:
+            #le joueur trouve le rat
+            flag['foret2Rat'] = False
+            print('Un rat vous mords !')
+            Joueur.PV -= 1
+            time.sleep(2)
+            rat.presentmonstre()
+            print('')
+            if decision(('A', 'a', 'r', 'R'), '      attaquer le rat(A)     ou          ne rien faire(R)') in['a', 'A']:
+                #lejoueur tue le rat
+                Joueur.attaque(rat)
+                time.sleep(4)
+            foret2(Joueur)#retour à la foret sans le rat cette fois
+                
+    else:#si le rat a déjà été découvert
+        action = decision(('a', 'A', 'e', 'E'), 'avancer sur la route(A)     ou     explorer la grotte(E)')
+    if action in ['e', 'E']:#explorer la grotte
+        print('Vous entrez dans la grotte')
+        time.sleep(1)
+        grotte(Joueur)
+    ville(Joueur)#arrivé dans la ville du premier niveau
+        
+def grotte(Joueur):
+    print('Devant vous se poursuit un boyau étroit')
+    if decision(('c', 'C', 'R', 'r'), '      continuer(C)     ou          rebrousser chemin(R)') in ['c', 'C']:
+        grotte2(Joueur)#arrivée dans la version plus profonde de la grotte
+        
+    #retourne dans la foret
+
+    if flag['banditGrotte']: #si le bandit n'a pas déjà été écarté
+        banditgrotte(Joueur)
+
+    #si le bandit à déjà été écarté            
+    foret2(Joueur)#retour à la foret d'initiation
+    
+def banditgrotte(Joueur):#rencontre avec un bandit entre la grotte et la foret
+    flag['banditGrotte'] = False
+    print('Vous retournez dans la foret quand un bandit vous attaque !!')
+    time.sleep(2)
+    print('')
+    bandit.attaque(Joueur)
+    print('')
+    time.sleep(1)
+    bandit.presentmonstre()
+    if decision(('A', 'a', 'f', 'F'),'attaquer(A)     ou      fuir(F)') in ['F', 'f']:
+        print('Vous fuyez aussi vite que vous le pouvez vers la ville')
+        Joueur.gain_competence(sprint)
+        ville(Joueur)#arrivé dans la ville du premier niveau
+    Joueur.attaque(bandit)
+    print('')
+    time.sleep(3)
+    print("Le bandit recule et vous crie 'Donnes moi ta bourse ou je te fais la peau !' en vous menaçant de son épée")
+    time.sleep(3)
+    print('')
+    action = decision(('d', 'D', 'a', 'A', 'f', 'f'), "dire que vous n'avez pas un sou(D)     ou    attaquer(A)     ou     fuir(F)")
+    if action in ['f', 'F']:
+        print('Vous fuyez aussi vite que vous le pouvez vers la ville')
+        Joueur.gain_competence(sprint)
+        ville(Joueur)#arrivé dans la ville du premier niveau
+    elif action in ['a', 'A']:
+        #attaquer le bandit
+        print('Vous infligez un grand coup au bandit')
+        bandit.PV -= Joueur.ATK + 3
+        print('')
+        print('bandit :')
+        print('vie :', bandit.PV, '/', bandit.PVM)
+        time.sleep(3)
+        Joueur.gain_competence(coup_critique)
+        time.sleep(5)
+        print('')
+        print("'A... Attendez !!! Pitié, je vous donnerai tous ce que vous voulez, mais épargnez moi, par pitié !!!'")
+        if decision(('e', 'E', 't', 'T'), "l'épargner(E)    ou    le tuer(T)") in ['e', 'E']:
+            print("Le bandit pose son arme et sa bourse et s'enfuit en courant")
+            Joueur.gainXP(4)
+            print('')
+            print('Vous avez obtenu une [épée courte]')
+            arme[0] = '[épée courte]'
+            arme[1] = 1
+            print('Vous vous équipez de cette nouvelle arme')
+            print('attaque :', Joueur.ATK, '+ 1')
+            Joueur.ATK += 1
+            time.sleep(5)
+            print('Vous avez obtenu une [bourse de cuivre]')
+            print('Vous possédez maintenant 5 pièces')
+            piece[0] += 5
+            time.sleep(2)
+            foret2(Joueur)
+        else:
+            bandit.PV = 1
+            Joueur.attaque(bandit)
+            foret2(Joueur)
+    else:
+        #dire que vous êtes fauché
+        print('')
+        print("Le bandit s'approche de vous et vous fouille")
+        while len(objet) > 0:
+            obj = objet[0]
+            print(obj)
+            print('Le bandit vous a volé votre', obj)
+            if obj == '[Amulette de protection]':
+                Joueur.PV -= 3
+                Joueur.PVM -= 3
+                print("Vous perdez la protection de l'amulette")
+                time.sleep(2)
+                print('Vous avez perdu 3 points de vie')
+                print('')
+            elif obj == '[parchemin de soin]':
+                print('Vous perdez vos capacités de soin')
+                print('')
+                vieaffect[0] -= 1
+                time.sleep(2)
+            objet.remove(obj)
+        time.sleep(4)
+        print("'Mouais, c'est vrai que t'as pas l'air très riche... Aller, tire toi !'")
+        time.sleep(3)
+        print('Vous repartez misérablement')
+        foret2(Joueur)
+                
+
+            
+def grotte2(Joueur):
+    soin()
+    print('Vous vous faufilez entre les parois de pierre')
+    print('')
+    time.sleep(2)
+    print('Vous vous blessez à force de vous rapper contre la pierre')
+    print('Vous perdez 1 PV')
+    print('')
+    Joueur.PV -= 1
+    time.sleep(2)
+    print(Joueur.nom, ' :')
+    print('vie :', Joueur.PV, ' / ', Joueur.PVM)
+    if Joueur.est_mort():
+        print('Vous succombez à vos blessures')
+        game_over()
+    time.sleep(2)
+    if decision(('c', 'C', 'r', 'R'), 'continuer à avancer(C)       ou      rebrousser chemin et retourner dans la foret(R)') in ['r', 'R']:
+        
+        #retourne dans la foret
+        if flag['banditGrotte']: #si le bandit n'a pas déjà été écarté
+            banditgrotte(Joueur)
+        else:#si le bandit à déjà été écarté            
+            foret2(Joueur)#retour à la foret d'initiation
+            
+    #poursuivre dans la grotte
+    else:
+        grotte3(Joueur)
+
+def grotte3(Joueur):
+    #arrivée dans la salle caché de la grotte
+    print('Vous êtes dans une salle faiblement éclairée par une torche')
+    time.sleep(2)
+    #si la grotte n'a pas déjà été fouillée
+    if flag['parchgrotte']:
+        print('A votre droite brule une torche et devant vous se trouve un coffre, le chemin que vous avez emprunté semble être la seule issue')
+        time.sleep(2)
+        
+        if flag['torchegrotte']: #si le joueur n'a pas déjà essayé de s'emparer de la torche
+            temp = ['t', 'T', 'prendre la torche(T)     ou     ']
+        else: #empecher de pouvoir réessayer de prendre la torche indéfiniment
+            temp = ['justepourpasappuyerparhasardsurça', 'pareilqueàgauchemaisenplusfun', '']
+            
+        action = decision(('p', 'P', 'o', 'O', temp[0], temp[1]), temp[2] + "ouvrir le coffre(O)      ou   partir d'ici(P)")
+        if action in ['o', 'O']:
+            print('Vous ouvrez la coffre et y trouver un parchemin mystérieux')
+            if decision(('l', 'L', 'r', 'R'), 'lire le parchemin(L)     ou   remettre le parchemin en place(R)') in ['l', 'L']:
+                #prendre le parchemin
+                print("Vous venez d'acquerir un [parchemin de soin]")
+                time.sleep(2)
+                print("Tant que vous possedez un ou plusieurs [parchemin de soin], vous vous régénérez périodiquement")
+                print('')
+                objet.append('[parchemin de soin]')
+                vieaffect[0] += 1
+                flag['parchgrotte'] = False
+            grotte3(Joueur)
+    
+    else:
+        action = decision(('p', 'P', temp[0], temp[1]), temp[2] + "partir d'ici(P)")
+    #regarder la torche
+    if action in ['t', 'T']:
+        print("Cette torche est tenue par un solide socle de fer, impossible de l'emporter")
+        print('Etrangement, elle ne semble pas se consumer..')
+        flag['torchegrotte'] = False
+        time.sleep(4)
+        print('')
+        grotte3(Joueur)
+    if action in ['p', 'P']:
+        flag['torchegrotte'] = True
+        #retourne dans la foret en se rappant au paroi
+        print('Vous vous rappez aux parois')
+        print('Vous perdez 1 PV')
+        print('')
+        Joueur.PV -= 1
+        time.sleep(2)
+        print(Joueur.nom, ' :')
+        print('vie :', Joueur.PV, ' / ', Joueur.PVM)
+        if Joueur.est_mort():
+            print('Vous succombez à vos blessures')
+            game_over()
+        time.sleep(2)
+        if flag['banditGrotte']: #si le bandit n'a pas déjà été écarté
+            banditgrotte(Joueur)
+        else:#si le bandit à déjà été écarté            
+            foret2(Joueur)#retour à la foret d'initiation
+
+            
+
+#1 : le premier niveau
+def ville(Joueur):
+    if flag['ville1']:
+        repos()
+        flag['ville1'] = False
+    soin()
+    time.sleep(2)
+    print('Vous arrivez dans une grande ville, quelle animation !')
+    print('devant vous se dressent plusieures boutiques, à votre gauche une artère bien animée, et sur votre droite, une rue sombre attire votre attention')
+    action = decision(('m', 'M', 'a', 'A', 'e', 'E', 'r', 'R'), "Voir les magazins(M),     ou      voir l'analyste(A)     ou     explorer la ruelle(E)      ou     prendre la grande route(R)")
+    if action in ['m', 'M']:
+        magazin(Joueur)
+    elif action in ['a', 'A']:
+        analyste(Joueur)
+    elif action in ['e', 'E']:
+        ruelle(Joueur)
+    else:
+        ville2(Joueur)
+
+produits = [ ('[armure de cuir]', 'defense :', 2, 'prix :', 3), ('[épée courte]', 'attaque :', 1, 'prix :', 2), ('[épée longue]', 'attaque :', 2, 'prix : ',4), ('[lance]', 'attaque :', 3, 'prix :', 7)]
+def magazin(Joueur):
+    if not flag['magagain']:
+        if len(produits) == 0:
+            #si le joueur a déjà acheté tous les produits
+            print("Sortez ! Il n'y a plus rien à vendre ici")
+            return ville(Joueur)
+        print('Vous entrez dans un magazin, il semble vendre des armes et armures')
+        time.sleep(2)
+        print('')
+    #dis au joueur ce qu'il possède déjà
+    if arme[0] != '':
+        print('Vous possédez actuellement un(e) ' + arme[0], " doté d'une force d'attaque de " + str(arme[1]))
+    if armure[0] != '':
+        print('Vous possédez actuellement un(e) ' + armure[0], " doté d'une résistance de " + str(armure[1]))
+    print('')
+    print('vous pouvez achetez les objets suivants :')
+    for i in range(len(produits)):
+        print(produits[i][0], produits[i][1], produits[i][2], produits[i][3], produits[i][4])
+    print('Vous possédez actuellement ' + str(piece[0]) + ' pieces')
+    time.sleep(2)
+    print('')
+    #propose au joueur d'acheter un produit
+    if decision(('a', 'A', 'S', 's'), "Acheter un objet(A)    ou   sortir de la boutique(S)") in ['s', 'S']:
+        flag['magagain'] = False
+        return ville(Joueur)
+    print('Quel objet voulez-vous ?')
+    print('')
+    time.sleep(1)
+    temp = ['a', 'A']
+    for i in range(len(produits)):
+        #propose tous les produits et leurs effets
+        print(produits[i][0], produits[i][1], produits[i][2], produits[i][3], produits[i][4], '(' + str(i) + ')')
+        temp.append(str(i))
+    action = decision(temp, 'Choisir une arme x(X)    ou    annuler(A)')
+    if action in ['a', 'A']:
+        flag['magagain'] = False
+        return ville(Joueur)
+    i = int(action)
+    print('')
+    if produits[i][4] > piece[0]:
+        #si le joueur n'a pas de quoi se payer l'équipement
+        print("Vous n'avez pas assez d'argent pour achetez ça !")
+    elif (produits[i][1] == 'defense :' and produits[i][2] < armure[1]) or (produits[i][1] == 'attaque :' and produits[i][2] < arme[1]):
+        #si le joueur possède de meilleurs équipements que son achat
+        print('Mon garçon, cet équipement ne vaut pas celui que tu portes actuellement, je ne peux pas te le céder, déclare le commerçant')
+    else:
+        piece[0] -= produits[i][4]
+        if produits[i][1] == 'defense :':
+            if armure[0] != '':
+                print('Vous ôtez votre ' + armure[0])
+                print('Vous perdez votre protection')
+                PV -= armure[1]
+                PVM -= armure[1]
+                print('')
+                time.sleep(2)
+            print('Vous enfilez votre ' + produits[i][0])
+            print('Vous gagnez', produits[i][2], 'points de vie grâce à la résistance de votre armure')
+            armure[0] = produits[i][0]
+            armure[1] = produits[i][2]
+            Joueur.PV += armure[1]
+            Joueur.PVM += armure[1]
+            time.sleep(3)
+            print('')
+            print(Joueur.nom)
+            print('Vie :', Joueur.PV, '/', Joueur.PVM)
+            print('')
+            produits.remove(produits[i])
+        elif produits[i][1] == 'attaque :':
+            if arme[0] != '':
+                print('Vous ôtez votre ' + arme[0])
+                print("Vous perdez ", + arme[1] + " puissance d'attaque")
+                Joueur.ATK -= arme[1]
+                print('')
+                time.sleep(2)
+            print('Vous saississez votre ' + produits[i][0])
+            print('Vous gagnez', produits[i][2], "points d'attaque grâce à votre nouvelle arme")
+            arme[0] = produits[i][0]
+            arme[1] = produits[i][2]
+            Joueur.ATK += arme[1]
+            time.sleep(3)
+            print('')
+            print(Joueur.nom)
+            print('Attaque :', Joueur.ATK)
+            print('')
+            produits.remove(produits[i])
+    if decision(('s', 'S', 'a', 'A'), 'Sortir(S)     ou   acheter autre chose(A)') in ['s', 'S'] or len(produits) == 0:
+        flag['magagain'] = False
+        return ville(Joueur)
+    flag['magagain'] = True
+    magazin(Joueur)
+    
+def analyste(Joueur):
+    print("Vous entrez dans une petite boutique, une vielle dame vous demande :")
+    print("'Voulez-vous que je jete un coup d'oeil à vos objets et compétences ?'")
+    print('')
+    time.sleep(3)
+    action = decision(('c', 'C', 'o', 'O', 'p', 'P'), "Demandez de l'aide sur votre compétence(C)    ou    demande de faire expertiser vos objets(O)     ou    partir(P)")
+    if action in ['p', 'P']:
+        #resortir
+        print("'Bonne journée messire'")
+        ville(Joueur)
+    elif action in ['c', 'C']:
+        if Joueur.competence == connu:
+            print("'Et bien... Vous êtes célèbre, mais... Vous ne possédez pas vraiment de compétence'")
+            print("'Désolé de vous l'apprendre..'")
+            time.sleep(2)
+        elif Joueur.competence == coup_critique:
+            print("Vous avez une certaine force dans les bras... Je pense que vous serez parfois capable de porter des coups d'une rare puissance à vos ennemis")
+            print("Vous la trouvez peut être faible pour l'instant, mais en vous améliorant, votre compétence deviendra plus puissantes et vous l'utiliserai plus souvent")
+            time.sleep(2)
+        elif Joueur.competence == garde:
+            print("'Vous possédez de bon réflexe, capables de briser partiellement des attaques adverses'")
+            print("'
+    print('#analyst not found#')
+    ville(Joueur)
+
+def ruelle(Joueur):
+    print('#ruelle#')
+    ville(Joueur)
+
+def ville2(Joueur):
+    print("#ville2#")
+    ville(Joueur)
+                
+    
+#aide sur l'ordre du tutoriel
+#les noeuds étapes(feuilles) doivent absolument être des racines :
+#tutoriel, foret2, ville
+    
+tuto = Arbre(tutoriel)
+tuto.a_droit(foret1)
+tuto.a_gauche(village_depart)
+tuto.fils_droit.a_droit(foret2)
+tuto.fils_droit.a_gauche(village_detruit)
+tuto.fils_gauche.a_droit(foret2)
+tuto.fils_droit.fils_gauche.a_gauche(foret2)
+
+init = Arbre(foret2)
+init.a_gauche(ville)
+init.a_droit(grotte)
+init.fils_droit.a_droit(grotte2)
+init.fils_droit.a_gauche(banditgrotte)
+init.fils_droit.fils_gauche.a_droit(ville)
+init.fils_droit.fils_gauche.a_gauche(foret2)
+init.fils_droit.fils_droit.a_droit(banditgrotte)
+init.fils_droit.fils_droit.a_gauche(grotte3)
+init.fils_droit.fils_droit.fils_droit.a_gauche(foret2)
+init.fils_droit.fils_droit.fils_droit.a_droit(ville)
+init.fils_droit.fils_droit.fils_gauche.a_gauche(banditgrotte)
+init.fils_droit.fils_droit.fils_gauche.fils_gauche.a_gauche(ville)
+init.fils_droit.fils_droit.fils_gauche.fils_gauche.a_droit(foret2)
