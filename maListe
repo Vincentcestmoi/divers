@@ -1,0 +1,310 @@
+class Liste:
+    """
+    Une fausse list semblable à une vraie
+    """
+    def __init__(self, data):
+        self.data = data
+        self.suivante = None
+
+        
+    def append(self, element):
+        """
+        ajoute 'element' à la fin de la Liste
+        element ne doit pas être None
+        """
+        
+        if element is None:
+            return print("TypeError : Liste can not support Nonetype element")
+        
+        if self.data is None:
+            self.data = element
+            
+        elif self.suivante is None:
+            self.suivante = Liste(element)
+            
+        else:
+            self.suivante.append(element)
+            
+            
+    def element(self, indice):
+        """
+        renvoie l'élément d'indice 'indice' de la Liste
+        """
+
+        if not type(indice) == int:
+            return print("TypeError : 'indice' must be an integer, not a " + str(type(indice)))
+        
+        if indice == 0:
+            return self.data
+        
+        if self.suivante is  None:
+            return print("IndexError: list index out of range")
+        
+        return self.suivante.element(indice - 1)
+    
+    
+    def pop(self):
+        """
+        renvoie le dernier élément de la Liste
+        l'élément est supprimé
+        """
+        
+        if self.data is None:
+            return print("Error : pop can not be use on a empty Liste")
+        
+        if self.suivante is None:
+            temp = self.data
+            self.data = None
+            return temp
+            
+        if self.suivante.suivante is None:
+            temp = self.suivante.data
+            self.suivante = None
+            return temp
+        
+        return self.suivante.pop()
+        
+        
+    def remove(self, element):
+        """
+        supprime la première occurrence de 'element' de la Liste
+        """
+        
+        if self.data == element:
+            
+            if self.suivante is None:
+                self.data = None
+                
+                
+            elif self.suivante.suivante is None:
+                self.data = self.suivante.data
+                self.suivante = None
+                    
+            else:
+                temp = self.suivante.data
+                self.suivante = self.suivante.suivante
+                self.data = temp
+                
+            return None
+            
+        elif self.suivante is None:
+            return print("ValueError: list.remove(x): x not in Liste")
+        
+        else:
+            self.suivante.remove(element)
+            
+        self.__vidange__()
+            
+            
+    def __vidange__(self):
+        temp = self.pop()
+        if temp is not None:
+            self.append(temp)
+    
+    
+    def longueur(self):
+        """
+        renvoie le nombre d'éléments contenue dans la Liste
+        """
+        
+        if self.data is None:
+            return 0
+        
+        if self.suivante is None:
+            return 1
+        
+        return 1 + self.suivante.longueur()
+    
+    
+    def index(self, element):
+        """
+        renvoie l'indice de la première occurrence d' 'element' dans la Liste
+        """
+        
+        if self.data == element:
+            return 0
+        
+        if self.suivante is None:
+            return print("ValueError: list.index(x): x not in Liste")
+        
+        temp = self.suivante.index(element)
+        if temp is None:
+            return None
+        return temp + 1
+    
+    
+    def clear(self):
+        """
+        vide la Liste
+        """
+        
+        self.data = None
+        self.suivante = None
+        
+    
+    def parcours(self):
+        """
+        renvoie dans un tuple les données contenue dans la Liste
+        si la Liste est de taille 1, renvoie un dictionnaire de vleur clé-indice égale à cet unique élément
+        cette variable est destinée à permettre le parcours de la Liste
+        """
+        
+        if self.suivante is None:
+            return {self.data : self.data}
+        
+        if self.suivante.suivante is not None and self.suivante.suivante.suivante is None:
+            return (self.data, self.suivante.data, self.suivante.suivante.data)
+        
+        if self.suivante.suivante is not None:
+            return (self.data, self.suivante.data) + self.suivante.suivante.parcours()
+        
+        return (self.data, self.suivante.data)
+    
+    
+    def copy(self):
+        """
+        renvoie une copie de la Liste indépendante de celle-ci
+        """
+        liste2 = Liste(None)
+        
+        for element in self.parcours():
+            liste2.append(element)
+            
+        return liste2
+    
+    
+    def count(self, element):
+        """
+        return le nombre d'occurrence d' 'element' dans la Liste
+        """
+        
+        if self.element is None:
+            return 0
+        
+        if self.suivante is None:
+            if self.data == element:
+                return 1
+            return 0
+        
+        if self.data == element:
+            return 1 + self.suivante.count(element)
+        
+        return self.suivante.count(element)
+    
+    
+    def extend(self, groupe):
+        """
+        ajoute en fin de la Liste tous les éléments de 'groupe'
+        """
+        if type(groupe) != list and type(groupe) != tuple and type(groupe) != str and type(groupe) != dict:
+            return print("TypeError: 'groupe' must be a tuple, or a list, or a string, or a dict, not" + str(type(groupe)))
+        
+        for element in groupe:
+            self.append(element)
+            
+            
+    def insert(self, indice, element):
+        """
+        ajoute 'element' à la place d'indice 'indice'
+        tous les éléments d'un indice supérieur ou égaux à 'indice' seront décallés d'un rang
+        """
+        
+        if indice == 0:
+            temp = self.copy()
+            self.clear()
+            self.data = element
+            self.suivante = temp
+            
+        elif self.suivante is None:
+            self.append(element)
+        
+        else:
+            self.suivante.insert(indice - 1, element)
+            
+            
+    def mini(self):
+        """
+        renvoie l'élément le plus petit de la Liste
+        renvoie None en cas de problème
+        """
+                
+        if self.data is None:
+            return None
+        
+        if type(self.data) != int and type(self.data) != float:
+            return print("TypeError : data must be an integer or a float, not a " + str(type(self.data)))
+            
+        if self.suivante is None:
+            return self.data
+        
+        if type(self.suivante.data) != int and type(self.suivante.data) != float:
+            return print("TypeError : data must be an integer or a float, not a " + str(type(self.suivante.data)))
+            
+        test = self.suivante.mini()
+        if test is not None:
+            return min(self.data, test)
+        return None
+            
+            
+    def sort(self, tri = False):
+        """
+        trie la Liste par ordre croissant
+        """
+        
+        stock = self.copy()
+        stock2 = self.copy()
+        self.clear()
+        
+        while stock.data is not None:
+            
+            mini = stock.mini()
+            
+            if mini is None:
+                
+                for element in stock2.parcours():
+                    self.append(element)
+                    
+                return None
+            
+            stock.remove(mini)
+            self.append(mini)
+        
+        
+    def reverse(self):
+        """
+        inverse l'ordre des éléments de la Liste
+        """
+        
+        temp = Liste(None)
+        i = self.longueur()
+        
+        while i > 0:
+            temp.append(self.pop())
+            i -= 1
+            
+        for element in temp.parcours():
+            self.append(element)
+        
+            
+    def __str__(self, first = True):
+        
+        if first:
+            deb = '['
+            fin = ']'
+        else:
+            deb = ''
+            fin = ''
+            
+        elements = str(self.data)
+        
+        if self.suivante is not None:
+            elements += ' , ' + self.suivante.__str__(False)
+            
+        if self.data is not None:
+            return deb + elements + fin
+        return deb + fin
+    
+    
+my = Liste(0)
+for i in range(1, 11):
+    my.append(i)
