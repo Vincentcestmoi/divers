@@ -33,7 +33,7 @@ class Carte:
         return str(self.valeur)
     
     def montre(self):
-        return str(self.signe + ' ' + self.titre + ' ' + self.signe)
+        return self.signe + ' ' + self.titre + ' ' + self.signe
         
     def __str__(self):
         return self.titre + ' de ' + self.couleur
@@ -69,6 +69,8 @@ class Paquet:
     
     def vider(self):
         self.paquet = []
+        
+#p = Paquet();p.remplir(); p.melange(); print(p.carte(0)); p.carte(0).montre()
         
 def poker():
     
