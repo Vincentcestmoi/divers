@@ -14,6 +14,18 @@ def Critique(niveau):
         return randint(2, niveau + 1)
     return 0
 
+def Violence(niveau):
+    #la réussite de l'usage de cette compétence dépend du niveau de la cible
+    if randint(0, 4) == 0:
+        print("l'assaillant charge aussi violemment qu'imprudemment")
+        time.sleep(2)
+        if randint(0, 8) > niveau:
+            print("la puissance de l'attaque augmente légèrement grâce cette charge")
+            return 1
+        else:
+            print("Cet imprudent assaut est reçu par un coup d'épée du défenseur")
+            return -1
+    return 0
 def Esquive(niveau):
     #la réussite de cette compétence dépend du niveau de la cible
     if niveau < 8:
@@ -129,55 +141,114 @@ class Monstres(): #la classe des monstre rencontré, le joueur est un monstre do
         #initialisation des impacts potentiels des compétences
         bonus = 0
         defense = 0
+        testattaque = True
         
         #competence offensive
         if self.competence == coup_critique:
             bonus = Critique(self.niveau)
+        elif self.competence == violent:
+            temp = Violence(cible.niveau)
+            #si l'attaque réussit
+            if temp == 1:
+                bonus = 1
+            
+            #si l'attaque échoue et est subie
+            elif temp == -1:
+                testattaque = False
+                time.sleep(1)
+                print('')
+                self.PV -= 1
+                print(self.nom)
+                #vérification de la survis de l'attaquant
+                if self.est_mort():
+                    print('vie : 0 /' + str(self.PVM))
+                    time.sleep(0.5)
+                    print(self.nom, 'a été vaincu')
+                    #vérification de la victoire du joueur
+                    if cible.est_joueur() :
+                        print('')
+                        cible.gainXP(self.XP)
+                    #defaite du joueur
+                    else:
+                        game_over()
+                #en cas de survis de l'attaquant
+                else:
+                    print('vie :', self.PV, '/', self.PVM)
+                    
             
         #competence defensive
         if cible.competence == garde:
             defense = Garde(cible.niveau)
         if defense != 0:
             print("La défense est augmentée de " + str(defense) + " point(s) grace à la compétence 'Garde'")
-            
-        #frappe
-        print('')
-        print(self.nom, 'frappe', cible.nom)
-        print('')
-        print(str(cible.nom) + ' :')
         
-        #test d'esquive
-        if cible.competence == esquive:
-            if Esquive(cible.niveau):
-                print(cible.nom, "esquive l'attaque")
-                time.sleep(2)
-                return print('vie :', cible.PV, '/', cible.PVM)
-
-        #calcul des effets de compétence
-        if self.ATK + bonus <= defense:
-            if self.ATK > 1:
-                print("l'arme est brisée par la garde, l'attaque est réduite à 1")
-                self.ATK = 1
+        if testattaque :    
+            #frappe
+            print('')
+            print(self.nom, 'frappe', cible.nom)
+            print('')
+            print(str(cible.nom) + ' :')
+            
+            #test d'esquive
+            if cible.competence == esquive:
+                if Esquive(cible.niveau):
+                    print(cible.nom, "esquive l'attaque")
+                    time.sleep(2)
+                    print('vie :', cible.PV, '/', cible.PVM)
+                    testattaque = False
                 
-        #application des dommages
-            cible.PV -= 1
-        else:
-            cible.PV -= self.ATK + bonus - defense
-        #vérification de la survis de la cible
-        if cible.est_mort():
-            print('vie : 0 /' + str(cible.PVM))
-            time.sleep(0.5)
-            print(cible.nom, 'a été vaincu')
-            #vérification de la victoire du joueur
-            if self.est_joueur() :
-                print('')
-                self.gainXP(cible.XP)
-            #defaite du joueur
+
+        if testattaque :
+            #calcul des effets de compétence
+            if self.ATK + bonus <= defense:
+                if self.ATK > 1:
+                    print("l'arme est brisée par la garde, l'attaque est réduite à 1")
+                    self.ATK = 1
+                    
+            #application des dommages
+                cible.PV -= 1
             else:
-                game_over()
-        #en cas de survis de la cible
-        else:
-            print('vie :', cible.PV, '/', cible.PVM)
+                cible.PV -= self.ATK + bonus - defense
+            #vérification de la survis de la cible
+            if cible.est_mort():
+                print('vie : 0 /' + str(cible.PVM))
+                time.sleep(0.5)
+                print(cible.nom, 'a été vaincu')
+                #vérification de la victoire du joueur
+                if self.est_joueur() :
+                    print('')
+                    self.gainXP(cible.XP)
+                #defaite du joueur
+                else:
+                    game_over()
+            #en cas de survis de la cible
+            else:
+                print('vie :', cible.PV, '/', cible.PVM)
+                
+            
+            #une fois l'attaque finis, si la cible contre-attaque immédiatement
+            if cible.competence == contre_attaque and not cible.est_mort():
+                print('')
+                print(cible.nom, 'contre-attaque immédiatement !')
+                print(self.nom, 'est pris au dépourvu et ne peut pas se défendre !!')
+                time.sleep(2)
+                self.PV -= cible.ATK + cible.niveau
+                print(self.nom)
+                #vérification de la survis de l'attaquant attaqué
+                if self.est_mort():
+                    print('vie : 0 /' + str(self.PVM))
+                    time.sleep(0.5)
+                    print(self.nom, 'a été vaincu')
+                    #vérification de la victoire du joueur
+                    if cible.est_joueur() :
+                        print('')
+                        cible.gainXP(self.XP)
+                    #defaite du joueur
+                    else:
+                        game_over()
+                #en cas de survis de l'attaquant attaqué
+                else:
+                    print('vie :', self.PV, '/', self.PVM)
 
 
 def decision(issue, choix):
@@ -245,6 +316,8 @@ sanglant = "Il est couvert de sang frais, pas du sien apparemment (sans effet)"
 coup_critique = "Coup critique(passif) : Une capacité qui parfois augmente la puissance de frappe"
 sprint = "Sprint(passif - actif) : Améliore parfois légèrement votre attaque - modifie ou ajoute occasionnellement les choix proposés"
 esquive = "Esquive(passif) vous permet parfois d'esquiver un assaut ennemi"
+violent = "Son tempéramment agréssif le pousse parfois à de dangereux assaut"
+contre_attaque = "Contre_attaque(Passif) : Une réactivité et une hargne permettant de contre attaquer immédiatement après avoir été attaqué"
 
 #monstres
 Joueur = Monstres('name', "Un grand aventurier", 2, 10, connu, 0, 5, 1)
@@ -252,6 +325,8 @@ gobelintest = Monstres('Gobelin', "un petit monstre vert et puant, légèrement 
 gobelinkiller = Monstres('Gobelin', "un petit monstre vert et féroce, légèrement plus faible qu'un homme", 2, 10, sanglant, 4, None, 2)
 rat = Monstres('Rat', "une bete répugnante mais généralement inoffensive", 0, 1, laid, 1, None, 0)
 bandit = Monstres('bandit', 'Un homme versé dans les activités criminelles', 2, 12, coup_critique, 7, None, 2)
+Truant1 = Monstres('Truant', 'Un homme violent et agressif', 2, 11, violent, 8, None, 2)
+Truant2 = Monstres('Truant', 'Un homme violent et agressif', 4, 14, violent, 9, None, 3)
        
        
 #------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
@@ -809,6 +884,10 @@ def analyste(Joueur):
             print("'Vous êtes très agile, et pourrez parfois éviter les assauts de vos adversaires'")
             print("'Même si vous trouvez votre compétence faible, avec l'expérience vous pourrez l'utiliser de plus en plus efficacement'")
             time.sleep(2)
+        elif Joueur.competence == contre_attaque:
+            print("'Vous êtes très réactif et pouvez frapper vos adversaires immédiatement après avoir subi leurs assauts'")
+            print("'Cette compétence est puissante, et permet de passer outre la défense de votre adversaire surpris, mais prenez garde à ne pas mourir avant de frapper...'")
+            time.sleep(2)
     elif action in ['o', 'O']:
         for obj in object:
             #analyse chaque objet du joueur
@@ -862,6 +941,19 @@ def ruelle(Joueur):
             print("Vous arriver in extremis a exquiver l'assaut ennemi")
             time.sleep(2)
             Joueur.gain_competence(esquive)
+        else:
+            truant1.attaque(Joueur)
+            print('')
+            print("Vous profitez de la focalisation de votre ennemi sur son assaut pour immédiatement contre-attaquer")
+            time.sleep(2)
+            print("Suite à sa surprise, vous arrivez à toucher un point vital")
+            print('Coup critique infligé !!!')
+            Joueur.ATK += 3
+            Joueur.attaque(truant1)
+            Joueur.ATK -= 3
+            print('')
+            time.sleep(3)
+            Joueur.gain_competence(contre_attaque)
         
     
     print("'ruelle' not found'")
