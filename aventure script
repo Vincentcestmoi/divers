@@ -14,6 +14,12 @@ def Critique(niveau):
         return randint(2, niveau + 1)
     return 0
 
+def Esquive(niveau):
+    #la réussite de cette compétence dépend du niveau de la cible
+    if niveau < 8:
+        return randint(0, 13 - niveau) == 0
+    return randint(0, 3) == 0
+
 def Garde(niveau):
     effet = False
     #la reussite de l'usage de cette compétence se fait par palier de niveau
@@ -123,24 +129,36 @@ class Monstres(): #la classe des monstre rencontré, le joueur est un monstre do
         #initialisation des impacts potentiels des compétences
         bonus = 0
         defense = 0
+        
         #competence offensive
         if self.competence == coup_critique:
             bonus = Critique(self.niveau)
+            
         #competence defensive
         if cible.competence == garde:
             defense = Garde(cible.niveau)
         if defense != 0:
             print("La défense est augmentée de " + str(defense) + " point(s) grace à la compétence 'Garde'")
+            
         #frappe
         print('')
         print(self.nom, 'frappe', cible.nom)
         print('')
         print(str(cible.nom) + ' :')
+        
+        #test d'esquive
+        if cible.competence == esquive:
+            if Esquive(cible.niveau):
+                print(cible.nom, "esquive l'attaque")
+                time.sleep(2)
+                return print('vie :', cible.PV, '/', cible.PVM)
+
         #calcul des effets de compétence
         if self.ATK + bonus <= defense:
             if self.ATK > 1:
                 print("l'arme est brisée par la garde, l'attaque est réduite à 1")
                 self.ATK = 1
+                
         #application des dommages
             cible.PV -= 1
         else:
@@ -179,7 +197,7 @@ def decision(issue, choix):
         return decision(issue, choix)
 
 #les évènement à usage limité sont concervé ici :
-flag = {'foret2' : True, 'foret2Rat' : True, 'banditGrotte' : True, 'parchgrotte' : True, 'torchegrotte' : True, 'ville1' : True, 'magagain' : False}
+flag = {'foret2' : True, 'foret2Rat' : True, 'banditGrotte' : True, 'parchgrotte' : True, 'torchegrotte' : True, 'ville1' : True, 'magazin' : False, 'Analyste' : True}
 
 #les objets spéciaux ou équipement aquis sont stockés ici
 objet = []
@@ -226,6 +244,7 @@ garde = "Garde(passif) : expérience du combat permettant de parfois diminuer l'
 sanglant = "Il est couvert de sang frais, pas du sien apparemment (sans effet)"
 coup_critique = "Coup critique(passif) : Une capacité qui parfois augmente la puissance de frappe"
 sprint = "Sprint(passif - actif) : Améliore parfois légèrement votre attaque - modifie ou ajoute occasionnellement les choix proposés"
+esquive = "Esquive(passif) vous permet parfois d'esquiver un assaut ennemi"
 
 #monstres
 Joueur = Monstres('name', "Un grand aventurier", 2, 10, connu, 0, 5, 1)
@@ -606,6 +625,10 @@ def grotte3(Joueur):
             grotte3(Joueur)
     
     else:
+        if flag['torchegrotte']: #si le joueur n'a pas déjà essayé de s'emparer de la torche
+            temp = ['t', 'T', 'prendre la torche(T)     ou     ']
+        else: #empecher de pouvoir réessayer de prendre la torche indéfiniment
+            temp = ['justepourpasappuyerparhasardsurça', 'pareilqueàgauchemaisenplusfun', '']
         action = decision(('p', 'P', temp[0], temp[1]), temp[2] + "partir d'ici(P)")
     #regarder la torche
     if action in ['t', 'T']:
@@ -657,7 +680,7 @@ def ville(Joueur):
 
 produits = [ ('[armure de cuir]', 'defense :', 2, 'prix :', 3), ('[épée courte]', 'attaque :', 1, 'prix :', 2), ('[épée longue]', 'attaque :', 2, 'prix : ',4), ('[lance]', 'attaque :', 3, 'prix :', 7)]
 def magazin(Joueur):
-    if not flag['magagain']:
+    if not flag['magazin']:
         if len(produits) == 0:
             #si le joueur a déjà acheté tous les produits
             print("Sortez ! Il n'y a plus rien à vendre ici")
@@ -673,14 +696,18 @@ def magazin(Joueur):
     print('')
     print('vous pouvez achetez les objets suivants :')
     for i in range(len(produits)):
-        print(produits[i][0], produits[i][1], produits[i][2], produits[i][3], produits[i][4])
+        print(produits[i][0], produits[i][1], produits[i][2], '/', produits[i][3], produits[i][4])
     print('Vous possédez actuellement ' + str(piece[0]) + ' pieces')
     time.sleep(2)
     print('')
-    #propose au joueur d'acheter un produit
-    if decision(('a', 'A', 'S', 's'), "Acheter un objet(A)    ou   sortir de la boutique(S)") in ['s', 'S']:
-        flag['magagain'] = False
+    #propose au joueur d'acheter ou voler un produit
+    action = decision(('a', 'A', 'S', 's', 'v', 'V'), "Acheter un objet(A)    ou voler une arme(V)    ou   sortir de la boutique(S)")
+    if action in ['s', 'S']:
+        flag['magazin'] = False
         return ville(Joueur)
+    elif action in ['v', 'V']:
+        flag['magazin'] = False
+        return prison(Joueur)
     print('Quel objet voulez-vous ?')
     print('')
     time.sleep(1)
@@ -691,7 +718,7 @@ def magazin(Joueur):
         temp.append(str(i))
     action = decision(temp, 'Choisir une arme x(X)    ou    annuler(A)')
     if action in ['a', 'A']:
-        flag['magagain'] = False
+        flag['magazin'] = False
         return ville(Joueur)
     i = int(action)
     print('')
@@ -742,12 +769,16 @@ def magazin(Joueur):
             print('')
             produits.remove(produits[i])
     if decision(('s', 'S', 'a', 'A'), 'Sortir(S)     ou   acheter autre chose(A)') in ['s', 'S'] or len(produits) == 0:
-        flag['magagain'] = False
+        flag['magazin'] = False
         return ville(Joueur)
-    flag['magagain'] = True
+    flag['magazin'] = True
     magazin(Joueur)
     
 def analyste(Joueur):
+    if not flag['Analyste']:
+        #si l'analyste est en repos
+        print("La boutique est fermée pour l'instant, veuillez repassez plus tard")
+        return ville(Joueur)
     print("Vous entrez dans une petite boutique, une vielle dame vous demande :")
     print("'Voulez-vous que je jete un coup d'oeil à vos objets et compétences ?'")
     print('')
@@ -758,30 +789,98 @@ def analyste(Joueur):
         print("'Bonne journée messire'")
         ville(Joueur)
     elif action in ['c', 'C']:
+        #analyse les compétences du joueur
         if Joueur.competence == connu:
             print("'Et bien... Vous êtes célèbre, mais... Vous ne possédez pas vraiment de compétence'")
             print("'Désolé de vous l'apprendre..'")
+            time.sleep(2)
         elif Joueur.competence == coup_critique:
             print("Vous avez une certaine force dans les bras... Je pense que vous serez parfois capable de porter des coups d'une rare puissance à vos ennemis")
             print("Vous la trouvez peut être faible pour l'instant, mais en vous améliorant, votre compétence deviendra plus puissantes et vous l'utiliserai plus souvent")
             time.sleep(2)
         elif Joueur.competence == garde:
-            print("'Vous possédez de bon réflexe, capables de briser partiellement des attaques adverses'")
-            print("'Avec des l'expérience, vous pourrez bloquer plus souvent et plus pleinement les assauts ennemis'")
+            print("'Vous possédez de bons réflexes, capables de bloquer partiellement des attaques adverses'")
+            print("'Si vous vous pensez faible, sachez que vous pourrez bloquer plus souvent et plus efficacement les attaques avec de l'expérience'")
         elif Joueur.competence == sprint:
-            print("'Vous possédez de grande aptitudes de course, cela vous permettra parfois de prendre vos adversaires de vitesse'")
-            print("'Bien que se soit pas très puissant, cela vous offrira de grandes opportunités dans la vie de tous les jours'")
-        time.sleep(2)
-    print('#analyst not found#')
+            print("'Vous savez courir vite, et pourrez parfois prendre de vitesse vos adversaires'")
+            print("'Même si votre compétence est plutôt faible, savoir courir peut parfois permette des actions que des personnes plus lente ne pourait pas espérer'")
+            time.sleep(2)
+        elif Joueur.competence == esquive:
+            print("'Vous êtes très agile, et pourrez parfois éviter les assauts de vos adversaires'")
+            print("'Même si vous trouvez votre compétence faible, avec l'expérience vous pourrez l'utiliser de plus en plus efficacement'")
+            time.sleep(2)
+    elif action in ['o', 'O']:
+        for obj in object:
+            #analyse chaque objet du joueur
+            print("L'analyse observe votre", obj)
+            if obj == '[Amulette de protection]':
+                print("'Hooo ! Cette amulette renforce votre défense, mais pourrait être bien utile si vous arrivez à réveler son vrai potentiel... Ne vous en défausser à aucun prix !!'")
+                time.sleep(2)
+            elif obj == '[parchemin de soin]':
+                print("'Hum, ce parchemin magique peut vous soigner régulièrement, n'hésitez pas à l'utiliser, il est à usage illimité'")
+                time.sleep(2)
+                
+        if arme[0] != '':
+            #analyse l'arme du joueur
+            print("'Votre", arme[0], "possède", arme[1], "point d'attaques'")
+            if arme[0] == None: #pour les armes spéciales
+                pass
+            else:
+                print("'Je regrette, je ne sais rien de plus...'")
+                time.sleep(2)
+                
+        if armure[0] != '':
+            #analyse l'armure du joueur
+            print("'Votre", armure[0], "possède", armure[1], "point de défense'")
+            if armure[0] == None: #pour les armures spéciales
+                pass
+            else:
+                print("'Je regrette, je ne sais rien de plus...'")
+                time.sleep(2)
+                
+    #l'analyste doit à présent se reposer, la recharge à lieu à chaque fois que le joueur avance dans l'histoire
+    print("'Je dois me reposer à présent, sorter s'il vous plait...'")
+    time.sleep(1)
+    flag['Analyste'] = False
+    print('')
     ville(Joueur)
 
 def ruelle(Joueur):
-    print('#ruelle#')
+    print("Vous appercevez une silhouette qui semble se faire agresser par deux autres personnes sur le bord de la ruelle")
+    action = decision(('r', 'R', 'A', 'a', 'p', 'P'), "retourner en ville(R)       ou      aider la personne (A)      ou      passer comme si de irne n'était (R)")
+    if action in ['r', 'R']:
+        return ville(Joueur)
+    flag['Analyste'] = True
+    if action in ['p', 'P']:
+        print("Les deux agresseurs s'arretent pour vous observer, mais vous laisse continuer votre chemin sans encombre")
+        print('')
+        time.sleep(2)
+        return quartier_noir(Joueur)
+    if action in ['a', 'A']:
+        print("Vous êtes sur le point d'intervenir quand un des deux malfrats se jète sur vous, tout lame dehors, et vous attaque")
+        if decision(('E', 'e', 'c', 'C'), "esquiver(E)    ou     contre-attaquer(C)") in ['e', 'E', 'c', 'C']:
+            print("Vous arriver in extremis a exquiver l'assaut ennemi")
+            time.sleep(2)
+            Joueur.gain_competence(esquive)
+        
+    
+    print("'ruelle' not found'")
     ville(Joueur)
 
 def ville2(Joueur):
-    print("#ville2#")
+    print("'ville2' not found")
     ville(Joueur)
+    
+def prison(Joueur):
+    print("Vous êtes jeté en prison, curieusement, personne ne vous a pris ni votre bourse, ni vos armes, ni vos équipement")
+    print("Arène not found")
+    while True:
+        pass
+    
+def quartier_noir(Joueur):
+    print("'Quartier noir' not found")
+    while True:
+        pass
                 
     
 #aide sur l'ordre du tutoriel
