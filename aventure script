@@ -268,7 +268,8 @@ def decision(issue, choix):
         return decision(issue, choix)
 
 #les évènement à usage limité sont concervé ici :
-flag = {'foret2' : True, 'foret2Rat' : True, 'banditGrotte' : True, 'parchgrotte' : True, 'torchegrotte' : True, 'ville1' : True, 'magazin' : False, 'Analyste' : True}
+flag = {'foret2' : True, 'foret2Rat' : True, 'banditGrotte' : True, 'parchgrotte' : True, 'torchegrotte' : True, 'ville1' : True, 'magazin' : False, 'Analyste' : True,}
+flag_quete = {"bandeduquartiernoir" : False}
 
 #les objets spéciaux ou équipement aquis sont stockés ici
 objet = []
@@ -325,8 +326,8 @@ gobelintest = Monstres('Gobelin', "un petit monstre vert et puant, légèrement 
 gobelinkiller = Monstres('Gobelin', "un petit monstre vert et féroce, légèrement plus faible qu'un homme", 2, 10, sanglant, 4, None, 2)
 rat = Monstres('Rat', "une bete répugnante mais généralement inoffensive", 0, 1, laid, 1, None, 0)
 bandit = Monstres('bandit', 'Un homme versé dans les activités criminelles', 2, 12, coup_critique, 7, None, 2)
-Truant1 = Monstres('Truant', 'Un homme violent et agressif', 2, 11, violent, 8, None, 2)
-Truant2 = Monstres('Truant', 'Un homme violent et agressif', 4, 14, violent, 9, None, 3)
+truant1 = Monstres('Truant', 'Un homme violent et agressif', 2, 11, violent, 8, None, 2)
+truant2 = Monstres('Truant', 'Un homme violent et agressif', 4, 14, violent, 9, None, 3)
        
        
 #------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
@@ -870,8 +871,8 @@ def analyste(Joueur):
             print("'Désolé de vous l'apprendre..'")
             time.sleep(2)
         elif Joueur.competence == coup_critique:
-            print("Vous avez une certaine force dans les bras... Je pense que vous serez parfois capable de porter des coups d'une rare puissance à vos ennemis")
-            print("Vous la trouvez peut être faible pour l'instant, mais en vous améliorant, votre compétence deviendra plus puissantes et vous l'utiliserai plus souvent")
+            print("'Vous avez une certaine force dans les bras... Je pense que vous serez parfois capable de porter des coups d'une rare puissance à vos ennemis'")
+            print("'Vous la trouvez peut être faible pour l'instant, mais en vous améliorant, votre compétence deviendra plus puissantes et vous l'utiliserai plus souvent'")
             time.sleep(2)
         elif Joueur.competence == garde:
             print("'Vous possédez de bons réflexes, capables de bloquer partiellement des attaques adverses'")
@@ -926,22 +927,38 @@ def analyste(Joueur):
 
 def ruelle(Joueur):
     print("Vous appercevez une silhouette qui semble se faire agresser par deux autres personnes sur le bord de la ruelle")
-    action = decision(('r', 'R', 'A', 'a', 'p', 'P'), "retourner en ville(R)       ou      aider la personne (A)      ou      passer comme si de irne n'était (R)")
+    
+    #note : affronter les bandits est optionel mais permet de débloquer une histoire annexe si on les combat
+    
+    action = decision(('r', 'R', 'A', 'a', 'p', 'P'), "retourner en ville(R)       ou      aider la personne (A)      ou      passer comme si de rien n'était (R)")
     if action in ['r', 'R']:
+        #le joueur fais demi tour
         return ville(Joueur)
+    
+    #si le Joueur ne fais pas demi-tour, il poursuit l'histoire et ainsi l'analyste se recharge
     flag['Analyste'] = True
+    
+    #si le joueur passe, l'épisode optionel des bandits disparait
     if action in ['p', 'P']:
         print("Les deux agresseurs s'arretent pour vous observer, mais vous laisse continuer votre chemin sans encombre")
         print('')
         time.sleep(2)
         return quartier_noir(Joueur)
+    
+    #le joueur va affronter les bandits dans une nouvelle intrigue optionelle
     if action in ['a', 'A']:
+        flag_quete['bandeduquartiernoir'] = True
         print("Vous êtes sur le point d'intervenir quand un des deux malfrats se jète sur vous, tout lame dehors, et vous attaque")
         if decision(('E', 'e', 'c', 'C'), "esquiver(E)    ou     contre-attaquer(C)") in ['e', 'E', 'c', 'C']:
+            
+            #simulation d'esquive avant de gagner la compétence
             print("Vous arriver in extremis a exquiver l'assaut ennemi")
             time.sleep(2)
             Joueur.gain_competence(esquive)
+            
         else:
+            
+            #simulation de contre-attaque avant de gagner la compétence
             truant1.attaque(Joueur)
             print('')
             print("Vous profitez de la focalisation de votre ennemi sur son assaut pour immédiatement contre-attaquer")
@@ -954,17 +971,64 @@ def ruelle(Joueur):
             print('')
             time.sleep(3)
             Joueur.gain_competence(contre_attaque)
+            
+        #après le gain de compétence durant la lutte, le joueur va choisir son camp    
+        print("Le brigand vous jète un regard furibond avant de vous crier 'T'es qui toi ? Dégage ! Tu sais pas à qui t'as affaire, on est la bande du quartier noir !")
+        time.sleep(3)
+        print("Le brigant semble près à vous laisser partir, mais garde sa main sur son épée...")
+        time.sleep(2)
+        
+        action = decision(('a', 'A', 'q', 'Q', 'p', 'P'), "attaquer(A)      ou       question la brigand sur sa 'bande'(Q)      ou      passer son chemin(P)")
+        
+        if action in ['p', 'P']:
+            #le joueur part sans hostilité contre ou de la part de la bande, mais pourra la re rencontrer plus tard
+            flag_quete['bandeduquartiernoir'] = 1
+            return quartier_noir(Joueur)
+        
+        elif action in ['a', 'A']:
+            #le joueur se déclare totalement ennemi de la bande, et l'affrontera à nouveau plus tard
+            flag_quete['bandeduquartiernoir'] = 3
+            
+            print('')
+            print('Un combat acharné se lance entre vous et votre adversaire')
+            time.sleep(3)
+            while not (Joueur.est_mort() and truant1.est_mort()):
+                Truant1.attaque(Joueur)
+                time.sleep(2)
+                Joueur.attaque(truant1)
+                time.sleep(2)
+            
+            print('Votre adversaire git à présent devant vous dans une mare de sang')
+            soin()
+        
+        
+        #si (voir quand) le premier truant va mourir, le scénario optionel démarre
+        if truant1.est_mort():
+            print('')
+            print("L'autre silhouette vous regarde et s'enfuit soudainement")
+            time.sleep(2)
+            print("La victime, à terre, vous crie : 'Ne le poursuivez pas, c'est un piège !'")
+            
+            action == decision(('p','P', 'r', 'R', 'c', 'C'),"Poursuivre l'agresseur(P)       ou      rester avec la victime(R)      ou     continuer sa route(C)")
+            if action in ['c', 'C']:
+                #entrée dans le quartier noir avec l'histoire optionelle
+                return quartier_noir(Joueur)
+            
+            elif action in ['p', 'P']:
+                #le joueur tombe dans le piège
+                return piegeruel(Joueur)
         
     
     print("'ruelle' not found'")
-    ville(Joueur)
+    while True:
+        pass
 
 def ville2(Joueur):
     print("'ville2' not found")
     ville(Joueur)
     
 def prison(Joueur):
-    print("Vous êtes jeté en prison, curieusement, personne ne vous a pris ni votre bourse, ni vos armes, ni vos équipement")
+    print("Vous êtes jeté en prison, curieusement, personne ne vous a pris ni votre bourse, ni vos armes, ni vos équipements")
     print("Arène not found")
     while True:
         pass
@@ -973,7 +1037,11 @@ def quartier_noir(Joueur):
     print("'Quartier noir' not found")
     while True:
         pass
-                
+
+def piegeruelle(Joueur):
+    print("'Piegeruelle' not found")
+    while True:
+        pass
     
 #aide sur l'ordre du tutoriel
 #les noeuds étapes(feuilles) doivent absolument être des racines :
